@@ -5,8 +5,10 @@ A kanban board built with [CopilotKit](https://github.com/CopilotKit/CopilotKit)
 ## What it does
 
 - Move tasks between columns by asking the AI
-- Add new tasks from a description
+- Add, delete and reassign tasks from natural language
 - Get a visual board summary with generative UI
+
+https://github.com/user-attachments/assets/80fabe4f-93ba-40d7-843a-f93836775f15
 
 ## Getting started
 
