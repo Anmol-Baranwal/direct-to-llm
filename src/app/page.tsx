@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   useAgentContext,
   useFrontendTool,
@@ -14,11 +14,6 @@ type Expense = {
   category: string;
 };
 
-type SummaryResult = {
-  summary: Record<string, number>;
-  total: number;
-} | null;
-
 const initialExpenses: Expense[] = [
   { id: 1, description: "Groceries", amount: 85, category: "Food" },
   { id: 2, description: "Netflix", amount: 15, category: "Entertainment" },
@@ -27,7 +22,6 @@ const initialExpenses: Expense[] = [
 
 export default function Page() {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
-  const summaryRef = useRef<SummaryResult>(null);
 
   useAgentContext({
     description:
@@ -59,10 +53,8 @@ export default function Page() {
   useFrontendTool({
     name: "showSpendingSummary",
     description:
-      "Always call this tool when the user asks for a summary of their expenses.",
-    parameters: z.object({
-      total: z.number().describe("Sum of all expense amounts"),
-    }),
+      "Call this when the user asks for a summary or overview of their expenses.",
+    parameters: z.object({}),
     handler: async () => {
       const summary = expenses.reduce(
         (acc, e) => {
@@ -72,17 +64,22 @@ export default function Page() {
         {} as Record<string, number>,
       );
       const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-      summaryRef.current = { summary, total };
       return { summary, total };
     },
-    render: ({ status }) => {
-      const data = summaryRef.current;
+    render: ({ result, status }) => {
+      const data = result
+        ? (JSON.parse(result as string) as {
+            summary: Record<string, number>;
+            total: number;
+          })
+        : null;
+
       return (
         <div className="rounded-lg border p-4 mt-2 space-y-3">
           <p className="font-semibold text-sm">
             {status === "inProgress" ? "Calculating..." : "Spending Breakdown"}
           </p>
-          {status === "complete" && data && (
+          {status === "complete" && data?.summary && (
             <>
               {Object.entries(data.summary).map(([category, amount]) => (
                 <div key={category} className="flex justify-between text-sm">
