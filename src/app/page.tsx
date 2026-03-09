@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   useAgentContext,
   useFrontendTool,
@@ -14,6 +14,11 @@ type Expense = {
   category: string;
 };
 
+type SummaryResult = {
+  summary: Record<string, number>;
+  total: number;
+} | null;
+
 const initialExpenses: Expense[] = [
   { id: 1, description: "Groceries", amount: 85, category: "Food" },
   { id: 2, description: "Netflix", amount: 15, category: "Entertainment" },
@@ -22,6 +27,7 @@ const initialExpenses: Expense[] = [
 
 export default function Page() {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
+  const summaryRef = useRef<SummaryResult>(null);
 
   useAgentContext({
     description:
@@ -47,6 +53,51 @@ export default function Page() {
         ...prev,
         { id: Date.now(), description, amount, category },
       ]);
+    },
+  });
+
+  useFrontendTool({
+    name: "showSpendingSummary",
+    description:
+      "Always call this tool when the user asks for a summary of their expenses.",
+    parameters: z.object({
+      total: z.number().describe("Sum of all expense amounts"),
+    }),
+    handler: async () => {
+      const summary = expenses.reduce(
+        (acc, e) => {
+          acc[e.category] = (acc[e.category] ?? 0) + e.amount;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+      const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+      summaryRef.current = { summary, total };
+      return { summary, total };
+    },
+    render: ({ status }) => {
+      const data = summaryRef.current;
+      return (
+        <div className="rounded-lg border p-4 mt-2 space-y-3">
+          <p className="font-semibold text-sm">
+            {status === "inProgress" ? "Calculating..." : "Spending Breakdown"}
+          </p>
+          {status === "complete" && data && (
+            <>
+              {Object.entries(data.summary).map(([category, amount]) => (
+                <div key={category} className="flex justify-between text-sm">
+                  <span className="text-gray-600">{category}</span>
+                  <span className="font-medium">${amount}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm font-semibold border-t pt-2">
+                <span>Total</span>
+                <span>${data.total}</span>
+              </div>
+            </>
+          )}
+        </div>
+      );
     },
   });
 
