@@ -1,6 +1,6 @@
-# How to Add AI to your App
+# Direct To LLM
 
-A kanban board built with [CopilotKit](https://github.com/CopilotKit/CopilotKit) (Next.js) to demonstrate AI that reads your app state and takes actions through natural language.
+A kanban board built with [CopilotKit](https://github.com/CopilotKit/CopilotKit) and Next.js. Demonstrates the pattern of giving an LLM direct access to your app state and actions - no orchestration layer needed.
 
 ## What it does
 

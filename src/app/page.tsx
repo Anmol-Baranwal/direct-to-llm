@@ -4,6 +4,7 @@ import {
   useAgentContext,
   useFrontendTool,
   CopilotSidebar,
+  ToolCallStatus,
 } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 
@@ -443,10 +444,15 @@ export default function Page() {
       const blocking = current.filter(
         (t) => t.priority === "high" && t.status !== "done",
       );
-      return { byStatus, byPriority, blocking, total: current.length };
+      return JSON.stringify({
+        byStatus,
+        byPriority,
+        blocking,
+        total: current.length,
+      });
     },
     render: ({ result, status }) => {
-      if (status === "inProgress") {
+      if (status === ToolCallStatus.InProgress) {
         return (
           <div className="rounded-xl border border-slate-700/60 bg-slate-900 mt-2 p-4">
             <div className="flex items-center gap-2">
@@ -458,16 +464,18 @@ export default function Page() {
           </div>
         );
       }
-      const data = result
-        ? (JSON.parse(result as string) as {
-            byStatus: Record<string, number>;
-            byPriority: Record<string, number>;
-            blocking: Task[];
-            total: number;
-          })
-        : null;
-      if (!data) return null;
-      return <BoardSummaryCard data={data} />;
+
+      if (status === ToolCallStatus.Complete && result) {
+        const data = JSON.parse(result as string) as {
+          byStatus: Record<string, number>;
+          byPriority: Record<string, number>;
+          blocking: Task[];
+          total: number;
+        };
+        return <BoardSummaryCard data={data} />;
+      }
+
+      return null;
     },
   });
 
