@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Direct to LLM
 
-## Getting Started
+A minimal expense tracker showing the core pattern for adding AI to a React app with CopilotKit.
 
-First, run the development server:
+## The pattern
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+`useAgentContext` : shares your app state with the AI on every turn. Whatever you pass in becomes part of the LLM's context.
+
+```ts
+useAgentContext({
+  description: "The user's current expense list",
+  value: expenses,
+});
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`useFrontendTool` : defines actions the AI can trigger. You write the handler, the LLM decides when to call it based on the description.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```ts
+useFrontendTool({
+  name: "addExpense",
+  description: "Add an expense when the user mentions spending money.",
+  parameters: z.object({
+    description: z.string().describe("What it was for"),
+    amount: z.number().describe("Amount in dollars"),
+  }),
+  handler: async ({ description, amount }) => {
+    setExpenses((prev) => [...prev, { description, amount }]);
+  },
+});
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The `render` prop on `useFrontendTool` takes this further - instead of a text reply, the tool renders an actual React component inline in the chat. This is the Generative UI pattern.
 
-## Learn More
+## Docs
 
-To learn more about Next.js, take a look at the following resources:
+- [useAgentContext](https://docs.copilotkit.ai/reference/v2/hooks/useAgentContext)
+- [useFrontendTool](https://docs.copilotkit.ai/reference/v2/hooks/useFrontendTool)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Getting started
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Install the dependencies.
 
-## Deploy on Vercel
+```
+npm install
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Add your API key to `.env.local`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+OPENAI_API_KEY=sk-proj-...
+```
+
+Run the server.
+
+```
+npm run dev
+```

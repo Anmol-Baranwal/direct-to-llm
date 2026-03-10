@@ -4,6 +4,7 @@ import {
   useAgentContext,
   useFrontendTool,
   CopilotSidebar,
+  ToolCallStatus,
 } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 
@@ -64,24 +65,26 @@ export default function Page() {
         {} as Record<string, number>,
       );
       const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-      return { summary, total };
+      return JSON.stringify({ summary, total });
     },
     render: ({ result, status }) => {
-      const data = result
-        ? (JSON.parse(result as string) as {
-            summary: Record<string, number>;
-            total: number;
-          })
-        : null;
-
       return (
         <div className="rounded-lg border p-4 mt-2 space-y-3">
           <p className="font-semibold text-sm">
-            {status === "inProgress" ? "Calculating..." : "Spending Breakdown"}
+            {status === ToolCallStatus.InProgress
+              ? "Calculating..."
+              : "Spending Breakdown"}
           </p>
-          {status === "complete" && data?.summary && (
+          {status === ToolCallStatus.Complete && result && (
             <>
-              {Object.entries(data.summary).map(([category, amount]) => (
+              {Object.entries(
+                (
+                  JSON.parse(result) as {
+                    summary: Record<string, number>;
+                    total: number;
+                  }
+                ).summary,
+              ).map(([category, amount]) => (
                 <div key={category} className="flex justify-between text-sm">
                   <span className="text-gray-600">{category}</span>
                   <span className="font-medium">${amount}</span>
@@ -89,7 +92,17 @@ export default function Page() {
               ))}
               <div className="flex justify-between text-sm font-semibold border-t pt-2">
                 <span>Total</span>
-                <span>${data.total}</span>
+                <span>
+                  $
+                  {
+                    (
+                      JSON.parse(result) as {
+                        summary: Record<string, number>;
+                        total: number;
+                      }
+                    ).total
+                  }
+                </span>
               </div>
             </>
           )}
